@@ -27,10 +27,10 @@ def profile(user_id):
     user = md.User.query.get(user_id)
     if user == None:
         return redirect('/')
-    paginate = md.Image.query.filter_by(user_id=user_id).paginate(page=1, per_page=1, error_out=False)
-    return render_template('profile.html', user=user, images=paginate.items)
+    paginate = md.Image.query.paginate(page=1, per_page=1, error_out=False)
+    return render_template('profile.html', user=user, has_next=paginate.has_next,images=paginate.items)
 
-@app.route('/profile/images/<int:user_id>/<int:page>/<int:per_page>')
+@app.route('/profile/images/<int:user_id>/<int:page>/<int:per_page>/')
 def user_images(user_id, page, per_page):
     paginate = md.Image.query.filter_by(user_id=user_id).paginate(page=page, per_page=per_page, error_out=False)
     map = {'has_next':paginate.has_next}
