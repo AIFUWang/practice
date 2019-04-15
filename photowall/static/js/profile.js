@@ -18,7 +18,7 @@ $(function () {
         // 初始化数据
         that.uid = window.uid;
         that.page = 1;
-        that.pageSize = 3;
+        that.pageSize = 1;
         that.listHasNext = true;
         // 绑定事件
         $('.js-load-more').on('click', function (oEvent) {

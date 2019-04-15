@@ -1,9 +1,11 @@
 # -*- encoding=UTF-8 -*-
 from photowall import app, db
 from photowall import models as md
-from flask import render_template, redirect, request, flash, get_flashed_messages
+from flask import render_template, redirect, request, flash, get_flashed_messages, send_from_directory
 import random, hashlib, json
 from flask_login import login_user, logout_user, current_user, login_required
+import uuid, os
+from photowall.qiniusdk import qiniu_upload_file
 
 
 @app.route('/')
@@ -118,3 +120,48 @@ def reg():
 def logout():
     logout_user()
     return redirect('/')
+
+
+def save_to_qiniu(file, file_name):
+    return qiniu_upload_file(file, file_name)
+
+
+def save_to_local(file,file_name):
+    save_dir = app.config['UPLOAD_DIR']
+    file.save(os.path.join(save_dir,file_name))
+    return '/image/' + file_name
+
+
+@app.route('/upload/',methods={'post'})
+def upload():
+    file = request.files['file']
+    file_ext = ''
+    if file.filename.find('.')>0:
+        file_ext = file.filename.rsplit('.',1)[1].strip().lower()#lower将字符串转化为小写
+    if file_ext in app.config['ALLOWED_EXT']:
+        file_name = str(uuid.uuid1()).replace('-','') + '.' + file_ext
+        url = save_to_local(file,file_name)
+        if url != None:
+            db.session.add(md.Image(url, current_user.id))
+            db.session.commit()
+
+
+    return redirect('/profile/%d' % current_user.id)
+
+
+@app.route('/image/<image_name>')
+def view_image(image_name):
+    return send_from_directory(app.config['UPLOAD_DIR'], image_name)
+
+
+@app.route('/addcomment/', methods={'post'})
+def add_comment():
+    image_id = int(request.values['image_id'])
+    content = request.values['content']
+    comment = md.Comment(content, image_id, current_user.id)
+    db.session.add(comment)
+    db.session.commit()
+    return json.dumps({"code":0, "id":comment.id,
+                       "content":comment.content,
+                       "username":comment.user.username,
+                       "user_id":comment.user_id})
