@@ -1,6 +1,6 @@
 # -*- encoding=UTF-8 -*-
 #from flask_script import Manager
-from photowall import app
+from photowall2 import app
 
 
 if __name__ == '__main__':
